@@ -906,5 +906,8 @@ void main() {
       await tester.runAsync(storage.close);
       await tester.pumpWidget(const SizedBox());
     },
+    // This flow deletes the storage folder while its database is open, which only
+    // POSIX permits; Windows locks open files and cannot reach this scenario.
+    skip: Platform.isWindows,
   );
 }

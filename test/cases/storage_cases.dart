@@ -88,11 +88,19 @@ void main() {
       'damaged financial database',
     );
   });
-  test('in-session missing file blocks further writes', () async {
-    final repo = await storage.create();
-    await storage.databaseFile.rename('${storage.databaseFile.path}.moved');
-    await expectLater(repo.save(entry()), throwsStateError);
-  });
+  test(
+    'in-session missing file blocks further writes',
+    () async {
+      final repo = await storage.create();
+      await storage.databaseFile.rename('${storage.databaseFile.path}.moved');
+      await expectLater(repo.save(entry()), throwsStateError);
+    },
+    // Windows refuses to rename a file the application still holds open, so this
+    // "database vanished mid-session" scenario is only reachable on POSIX.
+    skip: Platform.isWindows
+        ? 'POSIX-only: Windows locks files held open by the app.'
+        : null,
+  );
   test('refresh recreates a deleted database after restart', () async {
     final original = await storage.create();
     await original.save(entry());
@@ -124,6 +132,11 @@ void main() {
       await fresh.save(entry(description: 'New session'));
       expect((await fresh.load()).entries.single.description, 'New session');
     },
+    // Deleting the live storage folder relies on POSIX unlink-while-open; Windows
+    // blocks removing a directory that still contains the app's open database.
+    skip: Platform.isWindows
+        ? 'POSIX-only: Windows cannot delete a folder holding an open database.'
+        : null,
   );
   test('recreation refuses existing valid and damaged databases', () async {
     final original = await storage.create();
