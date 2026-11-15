@@ -1,0 +1,15 @@
+#!/bin/bash
+# Xcode 27 rejects multiple -verify_arch arguments. Verify each requested
+# architecture separately; all other operations use Apple's tool unchanged.
+# https://github.com/flutter/flutter/issues/188346
+set -euo pipefail
+args=("$@")
+for ((i=0; i<${#args[@]}; i++)); do
+  if [[ "${args[$i]}" == '-verify_arch' && $i -eq 1 && ${#args[@]} -gt 3 ]]; then
+    for ((j=i+1; j<${#args[@]}; j++)); do
+      /usr/bin/xcrun lipo "${args[0]}" -verify_arch "${args[$j]}"
+    done
+    exit 0
+  fi
+done
+exec /usr/bin/xcrun lipo "$@"

@@ -1,0 +1,5 @@
+#include "../../Flutter/Flutter-Release.xcconfig"
+#include "Warnings.xcconfig"
+
+// Local release builds should not receive Xcode's debugging entitlement.
+CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO

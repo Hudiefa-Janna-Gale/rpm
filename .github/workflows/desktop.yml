@@ -1,0 +1,33 @@
+name: Desktop validation and release artifacts
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.6'
+          channel: stable
+          cache: true
+      - name: macOS validation and DMG
+        if: runner.os == 'macOS'
+        run: bash tool/release-macos.sh
+      - name: Windows validation and packaging
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./tool/release-windows.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RPM-${{ runner.os }}
+          path: dist/*
+          if-no-files-found: error
